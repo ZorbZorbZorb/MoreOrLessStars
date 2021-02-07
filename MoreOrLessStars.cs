@@ -20,11 +20,10 @@ namespace MoreOrLessStars {
         // Change the minimum and maximum values of the galaxy select slider
         [HarmonyPrefix, HarmonyPatch(typeof(UIGalaxySelect), "UpdateUIDisplay")]
         public static void Patch(ref UIGalaxySelect __instance, GalaxyData galaxy) {
-            Type type = __instance.GetType();
-            FieldInfo fi = type.GetField("starCountSlider", BindingFlags.NonPublic | BindingFlags.Instance);
-            Slider slider = (Slider)fi.GetValue(__instance);
-            slider.minValue = desiredMinStars;
-            slider.maxValue = desiredMaxStars;
+            BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+            Slider starCountSlider = ReflectionHelper.GetField<Slider>(__instance, "starCountSlider", flags);
+            starCountSlider.minValue = desiredMinStars;
+            starCountSlider.maxValue = desiredMaxStars;
         }
 
         // Remove the hard-coded star limits
