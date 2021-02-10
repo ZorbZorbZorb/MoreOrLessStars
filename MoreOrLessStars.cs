@@ -1,12 +1,13 @@
-﻿using BepInEx;
-using HarmonyLib;
-using MoreOrLessStars.Helpers;
-using System;
-using System.Reflection;
-using UnityEngine.UI;
+﻿using HarmonyLib;
+using System.Security;
+using System.Security.Permissions;
+using BepInEx;
+
+[module: UnverifiableCode]
+[assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
 
 namespace MoreOrLessStars {
-    [BepInPlugin("org.bepinex.plugins.moreorlessstars", "More or less stars", "1.0.0.0")]
+    [BepInPlugin("org.bepinex.plugins.moreorlessstars", "More or less stars", "1.0.1")]
     [BepInProcess("DSPGAME.exe")]
     public class MoreOrLessStars : BaseUnityPlugin {
         // Apply all patches
@@ -20,30 +21,28 @@ namespace MoreOrLessStars {
         // Change the minimum and maximum values of the galaxy select slider
         [HarmonyPrefix, HarmonyPatch(typeof(UIGalaxySelect), "UpdateUIDisplay")]
         public static void Patch(ref UIGalaxySelect __instance, GalaxyData galaxy) {
-            BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
-            Slider starCountSlider = ReflectionHelper.GetField<Slider>(__instance, "starCountSlider", flags);
-            starCountSlider.minValue = desiredMinStars;
-            starCountSlider.maxValue = desiredMaxStars;
+            if (__instance.starCountSlider.minValue != desiredMinStars) {
+                __instance.starCountSlider.minValue = desiredMinStars;
+            }
+            if (__instance.starCountSlider.maxValue != desiredMaxStars) {
+                __instance.starCountSlider.maxValue = desiredMaxStars;
+            }
         }
 
         // Remove the hard-coded star limits
         [HarmonyPrefix, HarmonyPatch(typeof(UIGalaxySelect), "OnStarCountSliderValueChange")]
         public static bool Patch(ref UIGalaxySelect __instance, ref float val) {
-            // Gather required private fields
-            BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
-            Slider starCountSlider = ReflectionHelper.GetField<Slider>(__instance, "starCountSlider", flags);
-            GameDesc gameDesc = ReflectionHelper.GetField<GameDesc>(__instance, "gameDesc", flags);
 
             // Replicate the code of the original method
-            int num = (int)( starCountSlider.value + 0.1f );
+            int num = (int)( __instance.starCountSlider.value + 0.1f );
             if ( num < desiredMinStars ) {
                 num = desiredMinStars;
             }
             else if ( num > desiredMaxStars ) {
                 num = desiredMaxStars;
             }
-            if ( num != gameDesc.starCount ) {
-                gameDesc.starCount = num;
+            if ( num != __instance.gameDesc.starCount ) {
+                __instance.gameDesc.starCount = num;
                 __instance.SetStarmapGalaxy();
             }
 
